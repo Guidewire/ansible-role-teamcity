@@ -1,0 +1,6 @@
+teamcity_server_install_dir: /opt/TeamCity
+teamcity_server_group: teamcity
+teamcity_server_user: teamcity
+teamcity_server_validate_certs: yes
+teamcity_server_archive_download_dir: /tmp
+teamcity_server_unarchive_dir: /opt/

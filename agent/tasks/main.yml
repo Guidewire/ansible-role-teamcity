@@ -1,0 +1,85 @@
+- name: Create teamcity group
+  group: name="{{ teamcity_agent_group }}"
+  when: teamcity_agent_user != 'root'
+
+- name: Create teamcity user
+  user:
+    name: "{{ teamcity_agent_user }}"
+    group: "{{ teamcity_agent_group }}"
+    shell: /sbin/nologin
+    home: "{{ teamcity_agent_install_dir }}"
+    createhome: no
+  when: teamcity_agent_user != 'root'
+
+- name: create {{ teamcity_agent_install_dir }}
+  file: dest="{{ teamcity_agent_install_dir }}"
+        state=directory
+        recurse=yes
+        owner="{{ teamcity_agent_user }}"
+        group="{{ teamcity_agent_group }}"
+
+- name: get agent
+  unarchive:
+    # src: https://gwre-devexp-ci-poc-kdc-devci.gwre-devops.net/update/buildAgent.zip
+    src: "{{ teamcity_agent_server_url }}/update/buildAgent.zip"
+    dest: "{{ teamcity_agent_install_dir }}"
+    remote_src: yes
+    owner: "{{ teamcity_agent_user }}"
+    group: "{{ teamcity_agent_group }}"
+    creates: "{{ teamcity_agent_install_dir }}/conf"
+
+- name: get config stat
+  stat: path={{ teamcity_agent_install_dir }}/conf/buildAgent.properties
+  register: result
+
+- name: create configuration
+  copy: src={{ teamcity_agent_install_dir }}/conf/buildAgent.dist.properties
+        dest={{ teamcity_agent_install_dir }}/conf/buildAgent.properties
+        owner={{ teamcity_agent_user }}
+        group={{ teamcity_agent_group }}
+        remote_src=yes
+  when: not result.stat.exists
+
+- name: configure agent
+  lineinfile:
+    path: "{{ teamcity_agent_install_dir }}/conf/buildAgent.properties"
+    regexp: '^(\s*{{ item.n }})\s*='
+    line: '\1={{ item.v }}'
+    backrefs: yes
+    backup: yes
+  with_items:
+    - { n: serverUrl, v: "{{ teamcity_agent_server_url }}" }
+    - { n: name, v: "{{  teamcity_agent_name }}" }
+
+- name: put defaults
+  template:
+    src: etc/default/teamcity-agent.j2
+    dest: /etc/default/teamcity-agent
+  notify: "{{ 'systemd' if ansible_service_mgr == 'systemd' else 'initd' }} restart teamcity-agent"
+  when: ansible_service_mgr in ['upstart', 'sysvinit']
+
+- name: put init.d script
+  template:
+    src: etc/init.d/teamcity-agent.j2
+    dest: /etc/init.d/teamcity-agent
+    mode: "0755"
+  when: ansible_service_mgr in ['upstart', 'sysvinit']
+  notify: initd restart teamcity-agent
+
+- name: put systemd service
+  template:
+    src: etc/systemd/system/teamcity-agent.service.j2
+    dest: /etc/systemd/system/teamcity-agent.service
+  when: ansible_service_mgr == 'systemd'
+  notify: systemd restart teamcity-agent
+  register: service_config
+  
+- name: reload service config
+  shell: systemctl daemon-reload
+  when: service_config|changed
+
+- name: start and enable teamcity-agent
+  service: name=teamcity-agent state=started enabled=yes
+
+- name: flush handlers
+  meta: flush_handlers

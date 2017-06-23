@@ -1,0 +1,15 @@
+- hosts: vagrant
+  become: yes
+  roles:
+    - role: oracle-java    
+      tags: java
+
+    - role: teamcity/server
+      teamcity_server_validate_certs: no
+      teamcity_server_archive_download_dir: /opt
+      tags: srv
+
+    - role: teamcity/agent
+      # teamcity_agent_group: root
+      # teamcity_agent_user: root
+      tags: agent

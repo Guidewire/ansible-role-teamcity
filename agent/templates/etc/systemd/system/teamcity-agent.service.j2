@@ -1,0 +1,19 @@
+# -*- mode: conf -*-
+# {{ ansible_managed }}
+
+[Unit]
+Description=Teamcity build agent
+Documentation=https://confluence.jetbrains.com/display/TCD10//Setting+up+and+Running+Additional+Build+Agents
+After=network.target
+
+[Service]
+Type=forking
+User={{ teamcity_agent_user }}
+ExecStart={{ teamcity_agent_install_dir }}/bin/agent.sh start
+ExecStop={{ teamcity_agent_install_dir }}/bin/agent.sh stop
+PIDFile={{ teamcity_agent_install_dir }}/logs/buildAgent.pid
+RestartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

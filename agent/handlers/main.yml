@@ -1,0 +1,10 @@
+- name: systemd restart teamcity-agent
+  systemd:
+    name: teamcity-agent
+    state: restarted
+    daemon_reload: yes
+
+- name: initd restart teamcity-agent
+  service:
+    name: teamcity-agent
+    state: restarted

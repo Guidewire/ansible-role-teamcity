@@ -1,0 +1,8 @@
+teamcity_agent_install_dir: /opt/teamCityBuildAgent
+teamcity_agent_server_url: 'http://localhost:8111'
+teamcity_server_user_name: teamcity
+teamcity_server_user_passwd: teamcity
+teamcity_agent_group: tcagent
+teamcity_agent_user: tcagent
+teamcity_agent_token: ""
+teamcity_agent_name: "{{ ansible_hostname }}"
