@@ -10,8 +10,8 @@
 ### END INIT INFO
 
 # {{ ansible_managed }}
- 
-. /etc/default/$(basename "$0")
+NAME=teamcity-agent
+. /etc/default/$NAME
 
 # chpst?
 start() {
@@ -38,9 +38,9 @@ status)
     PID=$(cat ${TEAMCITY_AGENT_PATH}/logs/buildAgent.pid 2>/dev/null)
     if kill -0 "$PID" 2>/dev/null
     then
-        printf "\e[1;32mService $(basename "$0") running with pid $PID\e[0m\\n"
+        printf "\e[1;32mService $NAME running with pid $PID\e[0m\\n"
     else
-        printf "\e[1;31mService $(basename "$0") stopped\e[0m\\n"
+        printf "\e[1;31mService $NAME stopped\e[0m\\n"
     fi
  ;;
 *)
